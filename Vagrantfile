@@ -32,7 +32,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION = "2") do |config|
 
   config.vm.provider :virtualbox do |vb|
     # Machine name
-    vb.name = "dream"
+    vb.name = "fapfap"
 
     # Boot with GUI or not
     vb.gui = true
@@ -51,20 +51,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION = "2") do |config|
   config.vm.provision :shell,
     :inline => "which chef-solo || gem install chef --no-user-install --no-rdoc --no-ri"
 
+  ssh_files = %w(config development.pem github_rsa github_rsa.pub id_dsa id_dsa.old id_dsa.pub id_dsa.pub.old util util.pub)
+
+  private=ssh_files.reduce({}) do |ssh, item|
+    ssh.merge(".ssh/#{item}" => IO.read(File.expand_path("~/.ssh/#{item}")))
+  end
+
   config.vm.provision :chef_solo do |chef|
     chef.json = {
       "dotfiles" => {
         "user" => "coder",
         "group" => "users",
         "password" => "$1$oydT51W0$j6sCuAbZq4zTyXE1dsT5k1",
-        "private" => {
-          ".netrc" => IO.read(File.expand_path("~/.netrc")),
-          ".ssh/config" => IO.read(File.expand_path("~/.ssh/config")),
-          ".ssh/id_rsa.gabrielelana" => IO.read(File.expand_path("~/.ssh/id_rsa.gabrielelana")),
-          ".ssh/id_rsa.gabrielelana.pub" => IO.read(File.expand_path("~/.ssh/id_rsa.gabrielelana.pub")),
-          ".ssh/id_rsa.cleancode" => IO.read(File.expand_path("~/.ssh/id_rsa.cleancode")),
-          ".ssh/id_rsa.cleancode.pub" => IO.read(File.expand_path("~/.ssh/id_rsa.cleancode.pub"))
-        }
+        "private" => private
       }
     }
     chef.add_recipe "dream"
